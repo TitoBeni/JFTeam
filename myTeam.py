@@ -186,17 +186,6 @@ class OffensiveReflexAgent(ReflexCaptureAgent):
         max_value = max(values)
         best_actions = [a for a, v in zip(actions, values) if v == max_value]
 
-        actions_to_make = random.choice(best_actions)
-        # Get the successor board with a game state and action
-        successor = self.get_successor(game_state, actions_to_make)
-        
-        list_food_1 = self.get_food(game_state).as_list()
-        list_food_2 = self.get_food(successor).as_list()
-
-        if len(list_food_1) > len(list_food_2):
-            self.dots_eaten += 1
-
-
         if self.dots_eaten == 2:
             if not game_state.get_agent_state(self.index).is_pacman:
                 self.dots_eaten = 0
@@ -213,6 +202,16 @@ class OffensiveReflexAgent(ReflexCaptureAgent):
             return best_action
             # return self.return_home(game_state)
         else:
+            actions_to_make = random.choice(best_actions)
+            # Get the successor board with a game state and action
+            successor = self.get_successor(game_state, actions_to_make)
+            
+            list_food_1 = self.get_food(game_state).as_list()
+            list_food_2 = self.get_food(successor).as_list()
+
+            if len(list_food_1) > len(list_food_2):
+                self.dots_eaten += 1
+
             return actions_to_make            
         
 
