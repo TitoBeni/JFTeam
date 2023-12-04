@@ -77,6 +77,7 @@ class ReflexCaptureAgent(CaptureAgent):
         # You can profile your evaluation time by uncommenting these lines
         # start = time.time()
         values = [self.evaluate(game_state, a) for a in actions]
+        print(values)
         # print 'eval time for agent %d: %.4f' % (self.index, time.time() - start)
 
         max_value = max(values)
@@ -88,8 +89,11 @@ class ReflexCaptureAgent(CaptureAgent):
             best_dist = 9999
             best_action = None
             for action in actions:
+                # Get the successor board after the action
                 successor = self.get_successor(game_state, action)
+                # Get the position of the agent after the action
                 pos2 = successor.get_agent_position(self.index)
+                # Get the distance between the start position and the position after the action
                 dist = self.get_maze_distance(self.start, pos2)
                 if dist < best_dist:
                     best_action = action
@@ -102,11 +106,15 @@ class ReflexCaptureAgent(CaptureAgent):
         """
         Finds the next successor which is a grid position (location tuple).
         """
+        # self index is the index of the agent and indicates which agent is moving
         successor = game_state.generate_successor(self.index, action)
+        # Take the position of the successor
         pos = successor.get_agent_state(self.index).get_position()
+        # If the position is not the same as the nearest point        
         if pos != nearestPoint(pos):
             # Only half a grid position was covered
             return successor.generate_successor(self.index, action)
+        
         else:
             return successor
 
@@ -141,20 +149,72 @@ class OffensiveReflexAgent(ReflexCaptureAgent):
   we give you to get an idea of what an offensive agent might look like,
   but it is by no means the best or only way to build an offensive agent.
   """
+    def __init__(self, index, time_for_computing=0.1):
+        super().__init__(index, time_for_computing)
+        self.dots_eaten = 0
 
     def get_features(self, game_state, action):
+        # Build a counter
         features = util.Counter()
+        
+        # Get the successor board with a game state and action
         successor = self.get_successor(game_state, action)
+        
+        # Get the food list of the successor board
         food_list = self.get_food(successor).as_list()
+        
+        # How many dots are in the board
         features['successor_score'] = -len(food_list)  # self.getScore(successor)
 
         # Compute distance to the nearest food
-
         if len(food_list) > 0:  # This should always be True,  but better safe than sorry
+    
             my_pos = successor.get_agent_state(self.index).get_position()
             min_distance = min([self.get_maze_distance(my_pos, food) for food in food_list])
             features['distance_to_food'] = min_distance
+        
         return features
+
+    def return_home(game_state):
+        pass
+
+    def choose_action(self, game_state):
+        # Get the legal actions
+        actions = game_state.get_legal_actions(self.index)
+        
+        values = [self.evaluate(game_state, a) for a in actions]
+        max_value = max(values)
+        best_actions = [a for a, v in zip(actions, values) if v == max_value]
+
+        actions_to_make = random.choice(best_actions)
+        # Get the successor board with a game state and action
+        successor = self.get_successor(game_state, actions_to_make)
+        
+        list_food_1 = self.get_food(game_state).as_list()
+        list_food_2 = self.get_food(successor).as_list()
+
+        if len(list_food_1) > len(list_food_2):
+            self.dots_eaten += 1
+
+        if game_state.get_agent_state(self.index).is_pacman:
+            self.dots_eaten = 0
+
+        if self.dots_eaten == 2:
+            print("Comimos dos dots")
+            best_dist = 9999
+            best_action = None
+            for action in actions:
+                successor = self.get_successor(game_state, action)
+                pos2 = successor.get_agent_position(self.index)
+                dist = self.get_maze_distance(self.start, pos2)
+                if dist < best_dist:
+                    best_action = action
+                    best_dist = dist
+            return best_action
+            # return self.return_home(game_state)
+        else:
+            return actions_to_make            
+        
 
     def get_weights(self, game_state, action):
         return {'successor_score': 100, 'distance_to_food': -1}
