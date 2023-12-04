@@ -196,10 +196,10 @@ class OffensiveReflexAgent(ReflexCaptureAgent):
         if len(list_food_1) > len(list_food_2):
             self.dots_eaten += 1
 
-        # if game_state.get_agent_state(self.index).is_pacman:
-        #     self.dots_eaten = 0
 
         if self.dots_eaten == 2:
+            if not game_state.get_agent_state(self.index).is_pacman:
+                self.dots_eaten = 0
             print("Comimos dos dots")
             best_dist = 9999
             best_action = None
